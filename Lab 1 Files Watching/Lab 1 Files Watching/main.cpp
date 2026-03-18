@@ -13,24 +13,28 @@
 
 namespace fs = std::filesystem;
 
-//обработчик событий
+/*
+ Обработчик событий
+*/
 class FileEventRegistrator {
 public:
     //появление файла
-    virtual void fileCreated(const fs::path& path, uintmax_t size) = 0;
+    virtual void onFileCreated(const fs::path& path, uintmax_t size) = 0;
     
     //изменение файла
-    virtual void fileModified(const fs::path& path, uintmax_t size) = 0;
+    virtual void onFileModified(const fs::path& path, uintmax_t size) = 0;
     
     //удаление файла
-    virtual void fileDeleted(const fs::path& path) = 0;
+    virtual void onFileDeleted(const fs::path& path) = 0;
     
     virtual ~FileEventRegistrator() = default;
 };
 
 
 
-//наблюдатель за файлом
+/*
+ Наблюдатель за файлом
+*/
 class FileWatcher {
 public:
     FileWatcher(const fs::path& path)
@@ -54,7 +58,7 @@ public:
             lastFileSize = fs::file_size(filePath);
             
             for (auto r : registrators)
-                r->fileCreated(filePath, lastFileSize);
+                r->onFileCreated(filePath, lastFileSize);
         }
         
         //файл существует
@@ -68,7 +72,7 @@ public:
                 lastFileSize = newSize;
                 
                 for (auto r : registrators)
-                    r->fileModified(filePath, newSize);
+                    r->onFileModified(filePath, newSize);
             }
         }
         
@@ -78,7 +82,7 @@ public:
             fileExists = false;
             
             for (auto r : registrators)
-                r->fileDeleted(filePath);
+                r->onFileDeleted(filePath);
         }
     }
     
@@ -104,20 +108,22 @@ private:
 
 
 
-//логгер
+/*
+ Консольный логгер
+*/
 class ConsoleLogger : public FileEventRegistrator
 {
 public:
     
-    void fileCreated(const fs::path& path, uintmax_t size) override {
+    void onFileCreated(const fs::path& path, uintmax_t size) override {
         std::cout << "Файл появился: " << path << " Размер: " << size << " байт\n";
     }
     
-    void fileModified(const fs::path& path, uintmax_t size) override {
+    void onFileModified(const fs::path& path, uintmax_t size) override {
         std::cout << "Файл изменён: " << path << " Новый размер: " << size << " байт\n";
     }
     
-    void fileDeleted(const fs::path& path) override {
+    void onFileDeleted(const fs::path& path) override {
         std::cout << "Файл уделён: " << path << std::endl;
     }
 };
