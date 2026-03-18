@@ -9,85 +9,137 @@
 #include <filesystem>
 #include <chrono>
 #include <thread>
-#include <functional>
+#include <vector>
 
 namespace fs = std::filesystem;
 
-class Signal {
+//обработчик событий
+class FileEventRegistrator {
 public:
-    void connect(std::function<void(bool, uintmax_t, bool)> slot) {
-        this->slot = slot;
-    }
+    //появление файла
+    virtual void fileCreated(const fs::path& path, uintmax_t size) = 0;
     
-    void emit {
-        if (slot)
-            slot(exists, size, modified);
-    }
+    //изменение файла
+    virtual void fileModified(const fs::path& path, uintmax_t size) = 0;
     
-private:
-    std::function<void(bool, uintmax_t, bool)> slot;
+    //удаление файла
+    virtual void fileDeleted(const fs::path& path) = 0;
+    
+    virtual ~FileEventRegistrator() = default;
 };
 
+
+
+//наблюдатель за файлом
 class FileWatcher {
 public:
-    FileWatcher(const std::string& path)
-        : filePath(path), lastExists(false), lastSize(0)
+    FileWatcher(const fs::path& path)
+        : filePath(path)
     {}
     
-    Signal fileChanged;
+    //добавляется обработчик событий
+    void addRegistrator(FileEventRegistrator* registrator) {
+        registrators.push_back(registrator);
+    }
     
-    void check() {
+    //проверка состояния файла
+    void checkFile()
+    {
+        bool existsNow = fs::exists(filePath);
         
-        bool exists = fs::exists(filePath);
-        uintmax_t size = exists ? fs::file_size(filePath) : 0;
-        bool modified = false;
+        //файл появился
+        if (existsNow && !fileExists)
+        {
+            fileExists = true;
+            lastFileSize = fs::file_size(filePath);
+            
+            for (auto r : registrators)
+                r->fileCreated(filePath, lastFileSize);
+        }
         
-        if (exists && lastExists && size != lastSize)
-            modified = true;
+        //файл существует
+        else if (existsNow && fileExists)
+        {
+            uintmax_t newSize = fs::file_size(filePath);
+            
+            //файл изменился
+            if (newSize != lastFileSize)
+            {
+                lastFileSize = newSize;
+                
+                for (auto r : registrators)
+                    r->fileModified(filePath, newSize);
+            }
+        }
         
-        if (exists != lastExists || size != lastSize) {
-            lastExists = exists;
-            lastSize = size;
-            fileChanged.emit(exists, size, modified);
+        //файл удалён
+        else if (!existsNow && fileExists)
+        {
+            fileExists = false;
+            
+            for (auto r : registrators)
+                r->fileDeleted(filePath);
         }
     }
     
+    //запуск наблюдения
+    void startWatching()
+    {
+        while (true) {
+            checkFile();
+            
+            //пауза 100 мс
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
+    
+    
 private:
-    std::string filePath;
-    bool lastExists;
-    uintmax_t lastSize;
+    fs::path filePath; //путь до файла
+    bool fileExists = false; //существовал ли файл ранее
+    uintmax_t lastFileSize = 0; //прошлый размер
+    
+    std::vector<FileEventRegistrator*> registrators;
 };
 
-void consoleOutput(bool exists, uintmax_t size, bool modified) {
+
+
+//логгер
+class ConsoleLogger : public FileEventRegistrator
+{
+public:
     
-    if (!exists)
-        std::cout << "Файл не существует\n";
+    void fileCreated(const fs::path& path, uintmax_t size) override {
+        std::cout << "Файл появился: " << path << " Размер: " << size << " байт\n";
+    }
     
-    else if (modified)
-        std::cout << "Файл существует и был изменён. Размер: " << size << " байт\n";
+    void fileModified(const fs::path& path, uintmax_t size) override {
+        std::cout << "Файл изменён: " << path << " Новый размер: " << size << " байт\n";
+    }
     
-    else
-        std::cout << "Файл существует. Размер: " << size << " байт\n";
-}
+    void fileDeleted(const fs::path& path) override {
+        std::cout << "Файл уделён: " << path << std::endl;
+    }
+};
 
 int main() {
     
-    std::string path = "test.txt";
+    std::cout << "Введите путь к файлу для наблюдения\n";
+    
+    std::string path;
+    std::getline(std::cin, path);
     
     FileWatcher watcher(path);
     
-    watcher.fileChanged.connect(consoleOutput);
+    ConsoleLogger logger;
     
-    while (true) {
-        watcher.check();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    //соединение наблюдателя с регистрацией
+    watcher.addRegistrator(&logger);
+    
+    std::cout << "Начато наблюдение за файлом\nМожете произвести создание, изменение или удаление файла";
+    
+    //старт наблюдения
+    watcher.startWatching();
     
     return 0;
 }
-<<<<<<< HEAD
-//test
-=======
-
-
->>>>>>> main
