@@ -39,7 +39,12 @@ class FileWatcher {
 public:
     FileWatcher(const fs::path& path)
         : filePath(path)
-    {}
+    {
+        fileExists = fs::exists(filePath);
+        
+        if (fileExists)
+            lastFileSize = fs::file_size(filePath);
+    }
     
     //добавляется обработчик событий
     void addRegistrator(FileEventRegistrator* registrator) {
@@ -84,11 +89,15 @@ public:
             for (auto r : registrators)
                 r->onFileDeleted(filePath);
         }
+        
+        std::cout << "existsNow: " << existsNow
+                  << " fileExists: " << fileExists << std::endl;
     }
     
     //запуск наблюдения
     void startWatching()
     {
+        std::cout << "--Watcher started--\n";
         while (true) {
             checkFile();
             
@@ -116,15 +125,15 @@ class ConsoleLogger : public FileEventRegistrator
 public:
     
     void onFileCreated(const fs::path& path, uintmax_t size) override {
-        std::cout << "Файл появился: " << path << " Размер: " << size << " байт\n";
+        std::cout << "Файл появился: " << path << " Размер: " << size << " байт\n" << std::flush;
     }
     
     void onFileModified(const fs::path& path, uintmax_t size) override {
-        std::cout << "Файл изменён: " << path << " Новый размер: " << size << " байт\n";
+        std::cout << "Файл изменён: " << path << " Новый размер: " << size << " байт\n" << std::flush;
     }
     
     void onFileDeleted(const fs::path& path) override {
-        std::cout << "Файл уделён: " << path << std::endl;
+        std::cout << "Файл уделён: " << path << std::endl << std::flush;
     }
 };
 
@@ -135,14 +144,17 @@ int main() {
     std::string path;
     std::getline(std::cin, path);
     
-    FileWatcher watcher(path);
+    FileWatcher watcher(fs::absolute(path));
     
     ConsoleLogger logger;
     
     //соединение наблюдателя с регистрацией
     watcher.addRegistrator(&logger);
     
-    std::cout << "Начато наблюдение за файлом\nМожете произвести создание, изменение или удаление файла";
+    std::cout << "Начато наблюдение за файлом\nМожете произвести создание, изменение или удаление файла" << std::endl;
+    
+    std::cout << "Путь: " << path << std::endl;
+    std::cout << "Существует ли файл: " << fs::exists(path) << std::endl;
     
     //старт наблюдения
     watcher.startWatching();
