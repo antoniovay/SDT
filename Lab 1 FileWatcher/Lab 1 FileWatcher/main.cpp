@@ -16,17 +16,17 @@
 namespace fs = std::filesystem;
 
 /*
- Обработчик событий
+ Обработчик событий (интерфейс, который описывает, что делать при изменениях файла)
 */
 class FileEventRegistrator {
 public:
-    //появление файла
+    // появление файла
     virtual void onFileCreated(const fs::path& path, uintmax_t size) = 0;
     
-    //изменение файла
+    // изменение файла
     virtual void onFileModified(const fs::path& path, uintmax_t size) = 0;
     
-    //удаление файла
+    // удаление файла
     virtual void onFileDeleted(const fs::path& path) = 0;
     
     virtual ~FileEventRegistrator() = default;
@@ -35,32 +35,36 @@ public:
 
 
 /*
- Наблюдатель за файлом
+ Наблюдатель за одним файлом (периодически проверяет состояние файла и вызывает события)
 */
 class FileWatcher {
 public:
+    // инициализация watcher
     FileWatcher(const fs::path& path)
         : filePath(path)
     {
+        // проверка существует ли файл при старте
         fileExists = fs::exists(filePath);
         
+        // если существует — сохраняем базовые параметры
         if (fileExists) {
             lastFileSize = fs::file_size(filePath);
             lastWriteTime = fs::last_write_time(filePath);
         }
     }
     
-    //добавляется обработчик событий
+    // добавляется обработчик событий (просто ссылка)
     void addRegistrator(FileEventRegistrator* registrator) {
         registrators.push_back(registrator);
     }
     
-    //проверка состояния файла
+    // основная функция проверки состояния файла (в цикле)
     void checkFile()
     {
+        // текущее состояние файла в системе
         bool existsNow = fs::exists(filePath);
 
-        //файл появился
+        // файл появился
         if (existsNow && !fileExists)
         {
             fileExists = true;
@@ -71,7 +75,7 @@ public:
             lastFileSize = size;
             lastWriteTime = writeTime;
 
-            //если недавно удалялся - изменение
+            // если недавно удалялся - изменение (если файл быстро удалился и появился снова - изменение)
             if (wasRecentlyDeleted &&
                 std::chrono::steady_clock::now() - lastDeleteTime < std::chrono::milliseconds(300))
             {
@@ -87,12 +91,13 @@ public:
             }
         }
 
-        //файл существует
+        // файл существует (и может измениться)
         else if (existsNow && fileExists)
         {
             uintmax_t newSize = fs::file_size(filePath);
             auto newWriteTime = fs::last_write_time(filePath);
 
+            // проверка реальных изменений
             if (newSize != lastFileSize || newWriteTime != lastWriteTime)
             {
                 lastFileSize = newSize;
@@ -103,11 +108,12 @@ public:
             }
         }
 
-        //файл удалён
+        // файл удалён
         else if (!existsNow && fileExists)
         {
             fileExists = false;
 
+            // фиксируем время удаления
             lastDeleteTime = std::chrono::steady_clock::now();
             wasRecentlyDeleted = true;
 
@@ -118,12 +124,12 @@ public:
         //std::cout << "existsNow: " << existsNow << " fileExists: " << fileExists << std::endl;
     }
     
-    //запуск наблюдения
+    // запуск наблюдения (бесконечный цикл наблюдения, работает в отдельном потоке)
     void startWatching()
     {
         std::cout << "--Watcher started--\n";
         while (true) {
-            checkFile();
+            checkFile(); // проверка состояния
             
             //пауза 100 мс
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -132,20 +138,20 @@ public:
     
     
 private:
-    fs::path filePath; //путь до файла
-    bool fileExists = false; //существовал ли файл ранее
-    uintmax_t lastFileSize = 0; //прошлый размер
-    fs::file_time_type lastWriteTime;
-    std::chrono::steady_clock::time_point lastDeleteTime;
-    bool wasRecentlyDeleted = false;
+    fs::path filePath; // путь до файла
+    bool fileExists = false; // существовал ли файл ранее (текущее состояние существования)
+    uintmax_t lastFileSize = 0; // последний размер
+    fs::file_time_type lastWriteTime; // время последнего изменения
+    std::chrono::steady_clock::time_point lastDeleteTime; // время удаления
+    bool wasRecentlyDeleted = false; // флаг быстрого удаления/создания
     
-    std::vector<FileEventRegistrator*> registrators;
+    std::vector<FileEventRegistrator*> registrators; // подписчики событий
 };
 
 
 
 /*
- Консольный логгер
+ Консольный логгер (печатает изменения файла)
 */
 class ConsoleLogger : public FileEventRegistrator
 {
@@ -164,7 +170,7 @@ public:
     }
 };
 
-int main() {
+int main() { // создание и тест watcher-ов
     
 /*
     std::cout << "Введите путь к файлу для наблюдения\n";
@@ -217,7 +223,7 @@ int main() {
 */
     
         
-        
+    // список файлов для наблюдения
     std::vector<fs::path> files = {
         "/Users/antonymiroshnichenko/Desktop/test1.cpp",
         "/Users/antonymiroshnichenko/Desktop/test2.cpp",
@@ -225,18 +231,19 @@ int main() {
         "/Users/antonymiroshnichenko/Desktop/test4.cpp"
     };
     
+    // общий логгер
     ConsoleLogger logger;
     
-    std::vector<std::unique_ptr<FileWatcher>> watchers;
-    std::vector<std::thread> threads;
+    std::vector<std::unique_ptr<FileWatcher>> watchers; // хранение watcher-ов
+    std::vector<std::thread> threads; // потоки наблюдения
     
     // === Запуск watcher'ов ===
     for (const auto& file : files)
     {
         auto watcher = std::make_unique<FileWatcher>(file);
-        watcher->addRegistrator(&logger);
+        watcher->addRegistrator(&logger); // подписка на события
         
-        threads.emplace_back(&FileWatcher::startWatching, watcher.get());
+        threads.emplace_back(&FileWatcher::startWatching, watcher.get()); // запуск в отдельном потоке
         
         watchers.push_back(std::move(watcher));
     }
@@ -276,8 +283,10 @@ int main() {
         
     });
     
+    // ждём завершения теста
     testThread.join();
     
+    // ждём watcher-ы (они бесконечные)
     for (auto& t : threads)
         t.join();
         
