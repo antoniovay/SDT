@@ -135,7 +135,8 @@ template <> constexpr inline auto FileWatcher::qt_create_metaobjectdata<qt_meta_
         "size",
         "fileModified",
         "fileDeleted",
-        "checkFile"
+        "onDirectoryChanged",
+        "onFileChanged"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -151,8 +152,14 @@ template <> constexpr inline auto FileWatcher::qt_create_metaobjectdata<qt_meta_
         QtMocHelpers::SignalData<void(const QString &)>(6, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::QString, 3 },
         }}),
-        // Slot 'checkFile'
-        QtMocHelpers::SlotData<void()>(7, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onDirectoryChanged'
+        QtMocHelpers::SlotData<void(const QString &)>(7, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 2 },
+        }}),
+        // Slot 'onFileChanged'
+        QtMocHelpers::SlotData<void(const QString &)>(8, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 2 },
+        }}),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -179,7 +186,8 @@ void FileWatcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id,
         case 0: _t->fileCreated((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<qint64>>(_a[2]))); break;
         case 1: _t->fileModified((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<qint64>>(_a[2]))); break;
         case 2: _t->fileDeleted((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 3: _t->checkFile(); break;
+        case 3: _t->onDirectoryChanged((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 4: _t->onFileChanged((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
         default: ;
         }
     }
@@ -212,14 +220,14 @@ int FileWatcher::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 4)
+        if (_id < 5)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 4;
+        _id -= 5;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 4)
+        if (_id < 5)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 4;
+        _id -= 5;
     }
     return _id;
 }
