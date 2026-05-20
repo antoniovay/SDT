@@ -375,4 +375,4 @@ Case 5 — Неправильный путь к файлу
 
 ## UML-диаграмма
 
-<img width="923" height="547" alt="Image" src="https://github.com/user-attachments/assets/f4c8c865-4232-49d8-8a53-c606ddc183e7" />
+<img width="884" height="645" alt="Image" src="https://github.com/user-attachments/assets/2b58c0d2-ce23-47e0-aece-4666b097aa1d" />
