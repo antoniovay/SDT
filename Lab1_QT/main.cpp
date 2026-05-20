@@ -64,7 +64,10 @@ signals:
 
 private slots:
 
-    void onDirectoryChanged(const QString&)
+    /*
+        Проверка состояния файла
+    */
+    void checkFile()
     {
         fileInfo.refresh();
 
@@ -79,9 +82,25 @@ private slots:
             lastModified = fileInfo.lastModified();
 
             emit fileCreated(filePath, lastSize);
+        }
 
-            if (!watcher.files().contains(filePath))
-                watcher.addPath(filePath);
+        // ===== ИЗМЕНЕНИЕ =====
+        else if (existsNow && fileExists)
+        {
+            qint64 newSize = fileInfo.size();
+
+            QDateTime newModified =
+                fileInfo.lastModified();
+
+            // проверка реальных изменений
+            if (newSize != lastSize ||
+                newModified != lastModified)
+            {
+                lastSize = newSize;
+                lastModified = newModified;
+
+                emit fileModified(filePath, newSize);
+            }
         }
 
         // ===== УДАЛЕНИЕ =====
@@ -93,83 +112,47 @@ private slots:
         }
     }
 
-    void onFileChanged(const QString&)
-    {
-        fileInfo.refresh();
-
-        if (!fileInfo.exists())
-            return;
-
-        qint64 newSize = fileInfo.size();
-
-        QDateTime newModified = fileInfo.lastModified();
-
-        if (newSize != lastSize ||
-            newModified != lastModified)
-        {
-            lastSize = newSize;
-            lastModified = newModified;
-
-            emit fileModified(filePath, newSize);
-        }
-
-        // восстановление watcher
-        if (!watcher.files().contains(filePath))
-            watcher.addPath(filePath);
-    }
-
 private:
 
     // ===== ПРИВАТНЫЙ КОНСТРУКТОР =====
     explicit FileWatcher(const QString& path,
                          QObject* parent = nullptr)
-        : QObject(parent),
-        filePath(path)
+        : QObject(parent), filePath(path)
     {
         fileInfo.setFile(filePath);
 
-        dirPath = fileInfo.absolutePath();
-
-        // следим за директорией
-        watcher.addPath(dirPath);
+        // начальное состояние
+        fileExists = fileInfo.exists();
 
         // если файл существует
-        if (fileInfo.exists())
+        if (fileExists)
         {
-            fileExists = true;
-
             lastSize = fileInfo.size();
             lastModified = fileInfo.lastModified();
-
-            watcher.addPath(filePath);
         }
 
-        connect(&watcher,
-                &QFileSystemWatcher::directoryChanged,
+        connect(&timer,
+                &QTimer::timeout,
                 this,
-                &FileWatcher::onDirectoryChanged);
+                &FileWatcher::checkFile);
 
-        connect(&watcher,
-                &QFileSystemWatcher::fileChanged,
-                this,
-                &FileWatcher::onFileChanged);
+
+        timer.start(100);
     }
 
 private:
 
     QString filePath;
 
-    QString dirPath;
-
     QFileInfo fileInfo;
-
-    QFileSystemWatcher watcher;
 
     bool fileExists = false;
 
     qint64 lastSize = 0;
 
     QDateTime lastModified;
+
+    QTimer timer;
 };
 
 
@@ -180,10 +163,11 @@ int main(int argc, char *argv[])
 
     ConsoleLogger logger;
 
+    QString path =
+        "/Users/antonymiroshnichenko/Desktop/test.txt";
+
     auto& watcher =
-        FileWatcher::getInstance(
-            "/Users/antonymiroshnichenko/Desktop/test.txt"
-            );
+        FileWatcher::getInstance(path);
 
     QObject::connect(
         &watcher,
@@ -205,6 +189,40 @@ int main(int argc, char *argv[])
         &logger,
         &ConsoleLogger::onFileDeleted
         );
+
+    // ===== ТЕСТ =====
+
+    // создание
+    QTimer::singleShot(1000, [path]()
+                       {
+                           QFile f(path);
+
+                           if (f.open(QIODevice::WriteOnly))
+                           {
+                               f.close();
+                           }
+                       });
+
+    // изменение
+    QTimer::singleShot(2000, [path]()
+                       {
+                           QFile f(path);
+
+                           if (f.open(QIODevice::Append))
+                           {
+                               QTextStream out(&f);
+
+                               out << "Modified\n";
+
+                               f.close();
+                           }
+                       });
+
+    // удаление
+    QTimer::singleShot(3000, [path]()
+                       {
+                           QFile::remove(path);
+                       });
 
     return app.exec();
 }
