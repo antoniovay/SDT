@@ -39,3 +39,146 @@
 
 # debug information files
 *.dwo
+
+build/
+
+# Сборки Qt Creator (файлы с информацией о сессиях)
+*.user
+*.user.*
+*.autosave
+
+# Результаты сборки (Make-файлы, объектники, исполняемые файлы)
+debug/
+release/
+release-android/
+debug-android/
+obj/
+moc/
+qmake/
+ui_*.h
+Makefile*
+*.prl
+*.a
+*.lo
+*.la
+*.lai
+*.o
+*.obj
+
+# Автоматически генерируемые файлы (компиляция ресурсов, мета-объектного компилятора)
+qrc_*.cpp
+# Для Qt 6 используются другие авто-генерируемые файлы
+/.qtc/
+/CMakeLists.txt.user*
+/CMakeLists.txt.user
+
+# Исполняемые файлы
+*.exe
+*.dll
+*.so
+*.dylib
+*.app
+
+# Временные файлы
+*.core
+*.stackdump
+
+# Логи сборки
+*.log
+
+# Пакеты и архивы для дистрибуции
+*.tar
+*.gz
+*.bz2
+*.zip
+*.7z
+
+# Отладочные символы и дампы
+*.suo
+*.pdb
+*.idb
+*.ilk
+*.exp
+
+*.DS_Store
+*.idx
+
+*~
+*.autosave
+*.a
+*.core
+*.moc
+*.o
+*.obj
+*.orig
+*.rej
+*.so
+*.so.*
+*_pch.h.cpp
+*_resource.rc
+*.qm
+.#*
+*.*#
+core
+!core/
+tags
+.DS_Store
+.directory
+*.debug
+Makefile*
+*.prl
+*.app
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+Thumbs.db
+*.res
+*.rc
+/.qmake.cache
+/.qmake.stash
+
+# qtcreator generated files
+*.pro.user*
+*.qbs.user*
+CMakeLists.txt.user*
+
+# xemacs temporary files
+*.flc
+
+# Vim temporary files
+.*.swp
+
+# Visual Studio generated files
+*.ib_pdb_index
+*.idb
+*.ilk
+*.pdb
+*.sln
+*.suo
+*.vcproj
+*vcproj.*.*.user
+*.ncb
+*.sdf
+*.opensdf
+*.vcxproj
+*vcxproj.*
+
+# MinGW generated files
+*.Debug
+*.Release
+
+# Python byte code
+*.pyc
+
+# Binaries
+# --------
+*.dll
+*.exe
+
+# Directories with generated files
+.moc/
+.obj/
+.pch/
+.rcc/
+.uic/
+/build*/
