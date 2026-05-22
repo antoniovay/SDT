@@ -99,3 +99,6 @@ qrc_*.cpp
 *.idb
 *.ilk
 *.exp
+
+*.DS_Store
+*.idx
