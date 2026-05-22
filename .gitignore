@@ -41,3 +41,61 @@
 *.dwo
 
 build/
+
+# Сборки Qt Creator (файлы с информацией о сессиях)
+*.user
+*.user.*
+*.autosave
+
+# Результаты сборки (Make-файлы, объектники, исполняемые файлы)
+debug/
+release/
+release-android/
+debug-android/
+obj/
+moc/
+qmake/
+ui_*.h
+Makefile*
+*.prl
+*.a
+*.lo
+*.la
+*.lai
+*.o
+*.obj
+
+# Автоматически генерируемые файлы (компиляция ресурсов, мета-объектного компилятора)
+qrc_*.cpp
+# Для Qt 6 используются другие авто-генерируемые файлы
+/.qtc/
+/CMakeLists.txt.user*
+/CMakeLists.txt.user
+
+# Исполняемые файлы
+*.exe
+*.dll
+*.so
+*.dylib
+*.app
+
+# Временные файлы
+*.core
+*.stackdump
+
+# Логи сборки
+*.log
+
+# Пакеты и архивы для дистрибуции
+*.tar
+*.gz
+*.bz2
+*.zip
+*.7z
+
+# Отладочные символы и дампы
+*.suo
+*.pdb
+*.idb
+*.ilk
+*.exp
