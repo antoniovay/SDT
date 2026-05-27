@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     QCoreApplication app(argc, argv);
 
     QString path =
-        "/Users/antonymiroshnichenko/Desktop/test.txt";
+        "test.txt";
 
 
 
@@ -93,5 +93,3 @@ int main(int argc, char *argv[])
 
     return app.exec();
 }
-
-#include "main.moc"
