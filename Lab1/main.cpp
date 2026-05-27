@@ -12,6 +12,7 @@
 
 int main(int argc, char *argv[])
 {
+    setlocale(LC_ALL,"Russian");
     QCoreApplication app(argc, argv);
 
     QString path =
