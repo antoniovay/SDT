@@ -9,6 +9,7 @@
 
 #include "ConsoleLogger.h"
 #include "FileWatcher.h"
+#include "TimerService.h"
 
 int main(int argc, char *argv[])
 {
@@ -24,14 +25,22 @@ int main(int argc, char *argv[])
     ConsoleLogger logger;
 
 
-
     // ===== SINGLETON WATCHER =====
     auto& watcher =
         FileWatcher::getInstance(path);
 
 
+    // ===== TIMER =====
+    TimerService polling(100);
+
 
     // ===== SIGNAL-SLOT =====
+
+    QObject::connect(
+        &polling,
+        &TimerService::tick,
+        &watcher,
+        &FileWatcher::checkFile);
 
     QObject::connect(
         &watcher,

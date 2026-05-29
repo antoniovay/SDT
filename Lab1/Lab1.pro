@@ -9,6 +9,7 @@ CONFIG += c++17 cmdline
 SOURCES += \
         ConsoleLogger.cpp \
         FileWatcher.cpp \
+        TimerService.cpp \
         main.cpp
 
 # Default rules for deployment.
@@ -18,4 +19,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     ConsoleLogger.h \
-    FileWatcher.h
+    FileWatcher.h \
+    TimerService.h

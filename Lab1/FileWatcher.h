@@ -32,7 +32,7 @@ signals:
     void fileModified(const QString& path, qint64 size);
     void fileDeleted(const QString& path);
 
-private slots:
+public slots:
 
     void checkFile();
 
@@ -51,13 +51,6 @@ private:
             lastSize = fileInfo.size();
             lastModified = fileInfo.lastModified();
         }
-
-        connect(&timer,
-                &QTimer::timeout,
-                this,
-                &FileWatcher::checkFile);
-
-        timer.start(100);
     }
 
 private:
@@ -67,7 +60,6 @@ private:
     bool fileExists = false;
     qint64 lastSize = 0;
     QDateTime lastModified;
-    QTimer timer;
 };
 
 #endif // FILEWATCHER_H
